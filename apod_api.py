@@ -1,25 +1,18 @@
 import requests
+import json
 
 
 '''
 Library for interacting with NASA's Astronomy Picture of the Day API.
 '''
-# NASA API KEY 3CGbIof8JmN09qviOquCUSy8oVEpHqmsMpeEyo3G
-#?  https://api.nasa.gov/planetary/apod?api_key=3CGbIof8JmN09qviOquCUSy8oVEpHqmsMpeEyo3G  
 
-
+apod_date = '1997-10-10'
 
 def main():
-    # TODO: Add code to test the functions in this module
+
+    info = get_apod_info(apod_date)
+    print(get_apod_image_url(info))
     
-    get_apod_info()
-    
-    return
-
-
-
-
-
 
 def get_apod_info(apod_date):
     """Gets information from the NASA API for the Astronomy 
@@ -31,18 +24,18 @@ def get_apod_info(apod_date):
     Returns:
         dict: Dictionary of APOD info, if successful. None if unsuccessful
     """
-    apod_image_url = f'https://api.nasa.gov/planetary/apod'
-    api_params = {'date': '1994-09-26',
-                  'thumbs': 'True',
-                  'api_key': '3CGbIof8JmN09qviOquCUSy8oVEpHqmsMpeEyo3G'}
-    
-
-    resp_msg = requests.get(api_params, params=api_params)
-    body_dict = resp_msg.text
+    apod_info_url = f'https://api.nasa.gov/planetary/apod'
+    api_params = {
+                'date': apod_date,
+                'thumbs': 'True',
+                'api_key': '3CGbIof8JmN09qviOquCUSy8oVEpHqmsMpeEyo3G'
+            }
+    resp_msg = requests.get(apod_info_url, params=api_params)
+    apod_info_dict = resp_msg.json()
     
     if resp_msg.status_code == requests.codes.ok:
         print('Sucesss')
-        return body_dict
+        return apod_info_dict
     else:
         print('Failed')
         print(f'{resp_msg.status_code} ({resp_msg.reason})')
@@ -63,7 +56,14 @@ def get_apod_image_url(apod_info_dict):
     Returns:
         str: APOD image URL
     """
-    return
+
+    if apod_info_dict['media_type'] == 'image':
+        apod_image_url = apod_info_dict['hdurl']
+        return apod_image_url
+    elif apod_info_dict['media_type'] == 'video':
+        apod_image_url = apod_info_dict['url']
+        return apod_image_url
+ 
 
 if __name__ == '__main__':
     main()

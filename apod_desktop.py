@@ -13,10 +13,15 @@ Usage:
 Parameters:
   apod_date = APOD date (format: YYYY-MM-DD)
 """
+
 from datetime import date
 import os
 import image_lib
 import inspect
+from sys import argv, exit
+import sqlite3
+import apod_api
+
 
 # Global variables
 image_cache_dir = None  # Full path of image cache directory
@@ -27,21 +32,21 @@ def main():
     # Get the APOD date from the command line
     apod_date = get_apod_date()    
 
-    # Get the path of the directory in which this script resides
+    # # Get the path of the directory in which this script resides
     script_dir = get_script_dir()
 
-    # Initialize the image cache
+    # # Initialize the image cache
     init_apod_cache(script_dir)
 
-    # Add the APOD for the specified date to the cache
+    # # Add the APOD for the specified date to the cache
     apod_id = add_apod_to_cache(apod_date)
 
-    # Get the information for the APOD from the DB
+    # # Get the information for the APOD from the DB
     apod_info = get_apod_info(apod_id)
 
-    # Set the APOD as the desktop background image
-    if apod_id != 0:
-        image_lib.set_desktop_background_image(apod_info['file_path'])
+    # # Set the APOD as the desktop background image
+    # if apod_id != 0:
+    # image_lib.set_desktop_background_image(apod_info['file_path'])
 
 def get_apod_date():
     """Gets the APOD date
@@ -55,8 +60,32 @@ def get_apod_date():
         date: APOD date
     """
     # TODO: Complete function body
-    apod_date = date.fromisoformat('2022-12-25')
+
+    apod_date = None
+
+    if len(argv) == 1:
+        apod_date = date.today()
+        print(f'Chosen current date: {apod_date}.')
+    if len(argv) >= 3:
+        print('Error: To many peramitors. Please print date in YYYY-MM-DD Format.')
+        exit() 
+
+    if len(argv) == 2:
+        try: 
+            apod_date = date.fromisoformat(argv[1])
+        except:
+            print('Error: Not in YYYY-MM-DD format.')
+            exit()
+        if apod_date < date(1995,6,16):
+            print('Error: APOD Date is invalid. Please provide a date between 1995-06-16 and today\'s date.')
+            exit()
+        elif apod_date > date.today():
+            print('Error: APOD Date is invalid. Please provide a date between 1995-06-16 and today\'s date.')
+            exit()   
+        else:
+            print(f'Success: Date chosen: {apod_date}.')       
     return apod_date
+
 
 def get_script_dir():
     """Determines the path of the directory in which this script resides
@@ -87,6 +116,38 @@ def init_apod_cache(parent_dir):
     # TODO: Determine the path of image cache DB
     # TODO: Create the DB if it does not already exist
 
+
+    image_cache_dir = parent_dir + r'\APODImages'
+
+    if os.path.exists(image_cache_dir):
+        print(image_cache_dir, 'exists.')
+    else:
+        os.mkdir(image_cache_dir)
+        print('Created APOD Image Directory.')
+    
+    image_cache_db = image_cache_dir + r'\APODImage.db'
+
+    if os.path.isfile(image_cache_db):
+        print(image_cache_db, 'exists.')
+    else:
+        con = sqlite3.connect(image_cache_db)
+        cur = con.cursor()
+        create_apod_table = """
+                CREATE TABLE IF NOT EXISTS apod_image_cache
+                (
+                    id INTEGER PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    explanation TEXT NOT NULL,
+                    full_path TEXT NOT NULL
+                    hash TEXT NOT NULL,
+                );          
+        """
+        cur.execute(create_apod_table)
+        con.commit()
+        con.close
+    return   
+    
+
 def add_apod_to_cache(apod_date):
     """Adds the APOD image from a specified date to the image cache.
      
@@ -107,6 +168,13 @@ def add_apod_to_cache(apod_date):
     # TODO: Check whether the APOD already exists in the image cache
     # TODO: Save the APOD file to the image cache directory
     # TODO: Add the APOD information to the DB
+
+    apod_info = apod_api.get_apod_info(apod_date)
+    image_data = apod_api.get_apod_image_url(apod_info)
+    image_lib.save_image_file(image_lib.download_image(image_data))
+ 
+    
+    
     return 0
 
 def add_apod_to_db(title, explanation, file_path, sha256):

@@ -14,4 +14,9 @@ apod_desktop.init_apod_cache(script_dir)
 root = Tk()
 root.geometry('600x400')
 
+
+
+
+
+
 root.mainloop()
