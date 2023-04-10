@@ -6,7 +6,7 @@ import json
 Library for interacting with NASA's Astronomy Picture of the Day API.
 '''
 
-apod_date = '1997-10-10'
+apod_date = '2022-01-10'
 
 def main():
 
@@ -61,7 +61,7 @@ def get_apod_image_url(apod_info_dict):
         apod_image_url = apod_info_dict['hdurl']
         return apod_image_url
     elif apod_info_dict['media_type'] == 'video':
-        apod_image_url = apod_info_dict['url']
+        apod_image_url = apod_info_dict['thumbnail_url']
         return apod_image_url
  
 
