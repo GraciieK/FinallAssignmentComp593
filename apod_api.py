@@ -32,7 +32,7 @@ def get_apod_info(apod_date):
             }
     resp_msg = requests.get(apod_info_url, params=api_params)
     apod_info_dict = resp_msg.json()
-    
+    print(f'Getting {apod_date} APOD information from NASA...', end='')
     if resp_msg.status_code == requests.codes.ok:
         print('Sucesss')
         return apod_info_dict
